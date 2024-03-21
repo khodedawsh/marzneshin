@@ -1,18 +1,31 @@
 import os
 from datetime import datetime
 
-from sqlalchemy import (BigInteger, Boolean, Column, DateTime, Enum,
-                        Float, ForeignKey, Integer, String, Table,
-                        UniqueConstraint)
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
 
 from app.db.base import Base
 from app.models.node import NodeStatus
-from app.models.proxy import (InboundHostALPN, InboundHostFingerprint,
-                              InboundHostSecurity, ProxyTypes)
-from app.models.user import (ReminderType, UserDataLimitResetStrategy,
-                             UserStatus)
+from app.models.proxy import (
+    InboundHostALPN,
+    InboundHostFingerprint,
+    InboundHostSecurity,
+    ProxyTypes,
+)
+from app.models.user import ReminderType, UserDataLimitResetStrategy, UserStatus
 
 
 inbounds_services = Table(
@@ -44,7 +57,9 @@ class Admin(Base):
     username = Column(String(32), unique=True, index=True)
     hashed_password = Column(String(128))
     users = relationship("User", back_populates="admin")
-    services = relationship("Service", secondary=admins_services, back_populates="admins")
+    services = relationship(
+        "Service", secondary=admins_services, back_populates="admins"
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
     is_sudo = Column(Boolean, default=False)
     password_reset_at = Column(DateTime)
@@ -56,7 +71,9 @@ class Service(Base):
     name = Column(String(64))
     users = relationship("User", secondary=users_services, back_populates="services")
     admins = relationship("Admin", secondary=admins_services, back_populates="services")
-    inbounds = relationship("Inbound", secondary=inbounds_services, back_populates="services")
+    inbounds = relationship(
+        "Inbound", secondary=inbounds_services, back_populates="services"
+    )
 
 
 class User(Base):
@@ -65,20 +82,31 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(32), unique=True, index=True)
     key = Column(String(64), unique=True)
-    services = relationship("Service", secondary=users_services, back_populates="users", lazy="joined")
+    services = relationship(
+        "Service", secondary=users_services, back_populates="users", lazy="joined"
+    )
     inbounds = relationship(
         "Inbound",
         secondary="join(users_services, inbounds_services, inbounds_services.c.service_id == users_services.c.service_id)"
-                  ".join(Inbound, Inbound.id == inbounds_services.c.inbound_id)", viewonly=True,
+        ".join(Inbound, Inbound.id == inbounds_services.c.inbound_id)",
+        viewonly=True,
         distinct_target_key=True,
-        lazy="joined")
+        lazy="joined",
+    )
     # proxies = relationship("Proxy", back_populates="user", cascade="all, delete-orphan")
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.active)
     used_traffic = Column(BigInteger, default=0)
-    node_usages = relationship("NodeUserUsage", back_populates="user", cascade="all,delete,delete-orphan",
-                               lazy="joined")
-    notification_reminders = relationship("NotificationReminder", back_populates="user",
-                                          cascade="all,delete,delete-orphan")
+    node_usages = relationship(
+        "NodeUserUsage",
+        back_populates="user",
+        cascade="all,delete,delete-orphan",
+        lazy="joined",
+    )
+    notification_reminders = relationship(
+        "NotificationReminder",
+        back_populates="user",
+        cascade="all,delete,delete-orphan",
+    )
     data_limit = Column(BigInteger)
     data_limit_reset_strategy = Column(
         Enum(UserDataLimitResetStrategy),
@@ -87,7 +115,9 @@ class User(Base):
     )
     ip_limit = Column(Integer, nullable=False, default=-1)
     settings = Column(String)
-    usage_logs = relationship("UserUsageResetLogs", back_populates="user", lazy="joined")
+    usage_logs = relationship(
+        "UserUsageResetLogs", back_populates="user", lazy="joined"
+    )
     expire = Column(Integer)
     admin_id = Column(Integer, ForeignKey("admins.id"))
     admin = relationship("Admin", back_populates="users")
@@ -124,9 +154,7 @@ class UserUsageResetLogs(Base):
 
 class Inbound(Base):
     __tablename__ = "inbounds"
-    __table_args__ = (
-        UniqueConstraint("node_id", "tag"),
-    )
+    __table_args__ = (UniqueConstraint("node_id", "tag"),)
 
     id = Column(Integer, primary_key=True)
     protocol = Column(Enum(ProxyTypes))
@@ -134,7 +162,9 @@ class Inbound(Base):
     config = Column(String(), nullable=False)
     node_id = Column(Integer, ForeignKey("nodes.id"), index=True)
     node = relationship("Node", back_populates="inbounds")
-    services = relationship("Service", secondary=inbounds_services, back_populates="inbounds")
+    services = relationship(
+        "Service", secondary=inbounds_services, back_populates="inbounds"
+    )
     hosts = relationship(
         "InboundHost", back_populates="inbound", cascade="all, delete, delete-orphan"
     )
@@ -159,13 +189,13 @@ class InboundHost(Base):
         Enum(InboundHostALPN),
         nullable=False,
         default=InboundHostSecurity.none,
-        server_default=InboundHostSecurity.none.name
+        server_default=InboundHostSecurity.none.name,
     )
     fingerprint = Column(
         Enum(InboundHostFingerprint),
         nullable=False,
         default=InboundHostSecurity.none,
-        server_default=InboundHostSecurity.none.name
+        server_default=InboundHostSecurity.none.name,
     )
 
     inbound_id = Column(Integer, ForeignKey("inbounds.id"), nullable=False)
@@ -201,9 +231,7 @@ class TLS(Base):
 
 class Node(Base):
     __tablename__ = "nodes"
-    __table_args__ = (
-        UniqueConstraint("address", "port"),
-    )
+    __table_args__ = (UniqueConstraint("address", "port"),)
     id = Column(Integer, primary_key=True)
     name = Column(String(256), unique=True)
     connection_backend = Column(String())
@@ -217,16 +245,20 @@ class Node(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     uplink = Column(BigInteger, default=0)
     downlink = Column(BigInteger, default=0)
-    user_usages = relationship("NodeUserUsage", back_populates="node", cascade="all, delete, delete-orphan")
-    usages = relationship("NodeUsage", back_populates="node", cascade="all, delete, delete-orphan")
-    usage_coefficient = Column(Float, nullable=False, server_default=text("1.0"), default=1)
+    user_usages = relationship(
+        "NodeUserUsage", back_populates="node", cascade="all, delete, delete-orphan"
+    )
+    usages = relationship(
+        "NodeUsage", back_populates="node", cascade="all, delete, delete-orphan"
+    )
+    usage_coefficient = Column(
+        Float, nullable=False, server_default=text("1.0"), default=1
+    )
 
 
 class NodeUserUsage(Base):
     __tablename__ = "node_user_usages"
-    __table_args__ = (
-        UniqueConstraint('created_at', 'user_id', 'node_id'),
-    )
+    __table_args__ = (UniqueConstraint("created_at", "user_id", "node_id"),)
 
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, nullable=False)  # one hour per record
@@ -239,9 +271,7 @@ class NodeUserUsage(Base):
 
 class NodeUsage(Base):
     __tablename__ = "node_usages"
-    __table_args__ = (
-        UniqueConstraint('created_at', 'node_id'),
-    )
+    __table_args__ = (UniqueConstraint("created_at", "node_id"),)
 
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, nullable=False)  # one hour per record
