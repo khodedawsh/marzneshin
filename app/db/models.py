@@ -63,6 +63,7 @@ class Admin(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_sudo = Column(Boolean, default=False)
     password_reset_at = Column(DateTime)
+    subscription_url_prefix = Column(String(256))
 
 
 class Service(Base):
@@ -180,6 +181,8 @@ class InboundHost(Base):
     path = Column(String(256))
     sni = Column(String(256))
     host = Column(String(256))
+    service_id = Column(Integer, ForeignKey("services.id"), index=True)
+    service = relationship("Service")
     security = Column(
         Enum(InboundHostSecurity),
         nullable=False,
