@@ -1,26 +1,23 @@
 {
-    "name": "Name",
-    "status": "Status",
-    "address": "Address",
-    "users": "Users",
-    "nodes": "Nodes",
-    "services": "Services",
-    "hosts": "Hosts",
-    "username": "Username",
-    "password": "Password",
-    "inbounds": "Inbounds",
-    "submit": "Submit",
-    "login": "Login",
-    "edit": "Edit",
-    "actions": "Actions",
-    "settings": "Settings",
-    "logs": "Logs",
-    "config": "Config",
-    "tag": "Tag",
-    "protocol": "Protocol",
-    "apply": "Apply",
-    "open": "Open",
-    "delete": "Delete",
+    "name": "Naw",
+    "status": "Dox",
+    "address": "Edrês",
+    "users": "Bekarhêneran",
+    "nodes": "Girêkan",
+    "services": "Rajekan",
+    "hosts": "Hostkan",
+    "username": "Naw Bekarhêneran",
+    "password": "Têperrewişe",
+    "inbounds": "înbawendkan",
+    "submit": "Nardin",
+    "login": "Çûnejûrewe",
+    "edit": "Desitkarîkirdn",
+    "actions": "Firman",
+    "settings": "Sazkarîyekan",
+    "logs": "Tomarkan",
+    "config": "Kanfîg",
+    "open": "Kirnewe",
+    "delete": "Sirrînewe",
     "port": "Port",
     "create": "Create",
     "page": {
@@ -71,10 +68,6 @@
             }
         },
         "services": {
-            "settings": {
-                "title": "Servicecs Settings",
-                "detail": "Details"
-            },
             "dialogs": {
                 "creation": {
                     "title": "Services Creation"

@@ -1,6 +1,8 @@
 import {
     ColumnDef,
     ColumnFiltersState,
+    OnChangeFn,
+    RowSelectionState,
     SortingState,
     VisibilityState,
     flexRender,
@@ -21,6 +23,7 @@ import {
     TableHeader,
     TableRow,
 } from "@marzneshin/components"
+
 import { useTranslation } from "react-i18next"
 import { DataTablePagination } from "./pagination"
 import { useState } from "react"
@@ -32,6 +35,8 @@ interface DataTableProps<TData, TValue> {
     filteredColumn: string
     onCreate?: () => void
     onOpen?: (object: TData) => void
+    setSelectedRow?: OnChangeFn<RowSelectionState> | undefined
+    selectedRow?: RowSelectionState | undefined
 }
 
 export function DataTable<TData, TValue>({
@@ -39,7 +44,9 @@ export function DataTable<TData, TValue>({
     data,
     onCreate,
     onOpen,
-    filteredColumn
+    filteredColumn,
+    selectedRow,
+    setSelectedRow,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
@@ -47,7 +54,6 @@ export function DataTable<TData, TValue>({
     )
     const [columnVisibility, setColumnVisibility] =
         useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = useState({})
     const table = useReactTable({
         data,
         columns,
@@ -58,12 +64,12 @@ export function DataTable<TData, TValue>({
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
+        onRowSelectionChange: setSelectedRow,
         state: {
             sorting,
             columnFilters,
             columnVisibility,
-            rowSelection,
+            rowSelection: selectedRow !== undefined ? selectedRow : {},
         },
     })
     const { t } = useTranslation();

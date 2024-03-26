@@ -11,12 +11,12 @@ export async function fetchDeleteNode(node: NodeType): Promise<NodeType> {
     });
 }
 
-const NodesDeleteFetchKey = "nodes-delete-fetch-key";
+const NodesDeleteFetchKey = "nodes";
 
 
 const handleError = (error: Error, value: NodeType) => {
     toast.error(
-        i18n.t('page.nodes.events.delete.error', { name: value.name }),
+        i18n.t('events.delete.error', { name: value.name }),
         {
             description: error.message
         })
@@ -24,16 +24,16 @@ const handleError = (error: Error, value: NodeType) => {
 
 const handleSuccess = (value: NodeType) => {
     toast.success(
-        i18n.t('page.nodes.events.delete.success.title', { name: value.name }),
+        i18n.t('events.delete.success.title', { name: value.name }),
         {
-            description: i18n.t('page.nodes.events.delete.success.desc')
+            description: i18n.t('events.delete.success.desc')
         })
     queryClient.invalidateQueries({ queryKey: [NodesQueryFetchKey] })
 }
 
 export const useNodesDeletionMutation = () => {
     return useMutation({
-        mutationKey: [NodesDeleteFetchKey,],
+        mutationKey: [NodesDeleteFetchKey],
         mutationFn: fetchDeleteNode,
         onError: handleError,
         onSuccess: handleSuccess,

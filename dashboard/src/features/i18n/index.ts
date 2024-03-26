@@ -33,6 +33,7 @@ i18n
             backend: {
                 loadPath: joinPaths([import.meta.env.BASE_URL, 'locales/{{lng}}.json']),
             },
+            supportedLngs: ['en', 'ku-kur', 'ku-sor', 'ku-sor-latin', 'fa', 'ru'],
         },
         function() {
             dayjs.locale(i18n.language);

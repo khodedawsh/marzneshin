@@ -12,7 +12,7 @@ export async function fetchCreateNode(node: NodeType): Promise<NodeType> {
 
 const handleError = (error: Error, value: NodeType) => {
     toast.error(
-        i18n.t('page.nodes.events.create.error', { name: value.name }),
+        i18n.t('events.create.error', { name: value.name }),
         {
             description: error.message
         })
@@ -20,15 +20,15 @@ const handleError = (error: Error, value: NodeType) => {
 
 const handleSuccess = (value: NodeType) => {
     toast.success(
-        i18n.t('page.nodes.events.create.success.title', { name: value.name }),
+        i18n.t('events.create.success.title', { name: value.name }),
         {
-            description: i18n.t('page.nodes.events.create.success.desc')
+            description: i18n.t('events.create.success.desc')
         })
     queryClient.invalidateQueries({ queryKey: [NodesQueryFetchKey] })
 }
 
 
-const NodesCreateFetchKey = "nodes-create-fetch-key";
+const NodesCreateFetchKey = "nodes";
 
 export const useNodesCreationMutation = () => {
     return useMutation({

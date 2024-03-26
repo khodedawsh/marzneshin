@@ -38,14 +38,14 @@ export function DataTableActionsCell<TData>({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onOpen(row.original)}>
+                <DropdownMenuItem onClick={() => { onOpen(row.original) }}>
                     <OpenInNewWindowIcon className="mr-1 w-4 h-4" /> {t('open')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(row.original) }}>
                     <PencilIcon className="mr-1 w-4 h-4" />    {t('edit')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDelete(row.original)} className="text-destructive">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(row.original) }} className="text-destructive">
                     <TrashIcon className="mr-1 w-4 h-4" />{t('delete')}
                 </DropdownMenuItem>
             </DropdownMenuContent>

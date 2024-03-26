@@ -16,7 +16,7 @@ import { cn } from '@marzneshin/utils';
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 
 export const DashboardLayout = () => {
-  const isDesktop = useScreenBreakpoint("sm");
+  const isDesktop = useScreenBreakpoint("md");
   const { collapsed, panelRef, open, setCollapsed, setOpen, toggleCollapse, toggleOpen } = usePanelToggle(isDesktop);
 
   return (
@@ -37,11 +37,11 @@ export const DashboardLayout = () => {
           <ResizablePanelGroup direction="horizontal" className="block sm:hidden">
             <ResizablePanel
               collapsible
-              collapsedSize={5}
+              collapsedSize={2}
               onCollapse={() => setCollapsed(true)}
               onExpand={() => setCollapsed(false)}
               minSize={15}
-              className={cn("w-[120px] min-w-[100px]")}
+              className={cn("w-[120px] min-w-[70px]")}
               defaultSize={20}
               ref={panelRef}
               maxSize={30}>
