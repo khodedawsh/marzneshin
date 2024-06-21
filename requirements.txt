@@ -35,4 +35,4 @@ python-multipart==0.0.7
 xxhash==3.4.1
 grpcio==1.60.0
 psycopg==3.1.18
-v2share==0.1.0b7
+v2share==0.1.0b8
