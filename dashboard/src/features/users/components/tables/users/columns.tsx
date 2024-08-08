@@ -29,7 +29,7 @@ export const columns = (actions: ColumnActions<UserType>): ColumnDefWithSudoRole
                 <OnlineStatus user={row.original} /> {row.original.username}
             </div>
         ),
-    }, 
+    },
     {
         accessorKey: "activated",
         enableSorting: false,

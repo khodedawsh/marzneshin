@@ -165,6 +165,8 @@
       }
     },
     "users": {
+      "created_at": "Created At",
+      "no_use": "No Use",
       "data_limit_reached": "Data Limit Reached",
       "note-placeholder": "Additional information about user",
       "data_limit": "Data Limit",
