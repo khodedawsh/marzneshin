@@ -1,13 +1,12 @@
 import base64
 import json
-import random
-import secrets
 from collections import defaultdict
 from datetime import datetime as dt, timedelta
 from importlib import resources
 from typing import Literal, Union, List, Type
 from uuid import UUID
 
+import exrex
 from jdatetime import date as jd
 from v2share import (
     V2Data,
@@ -212,7 +211,6 @@ def generate_user_configs(
     format_variables: dict,
 ) -> Union[List, str]:
 
-    salt = secrets.token_hex(8)
     configs = []
 
     for inb in inbounds:
@@ -236,34 +234,29 @@ def generate_user_configs(
         for host in hosts:
             if host.is_disabled:
                 continue
-            host_snis = host.sni.split(",") if host.sni else []
-            sni_list = host_snis or inbound.get("sni", [])
-            if sni_list:
-                sni = random.choice(sni_list).replace("*", salt)
-            else:
-                sni = ""
 
-            host_hosts = host.host.split(",") if host.host else []
-            req_host_list = host_hosts or inbound.get("host", [])
-            if req_host_list:
-                req_host = random.choice(req_host_list).replace("*", salt)
-            else:
-                req_host = ""
-
-            host_tls = (
-                None
-                if host.security == InboundHostSecurity.inbound_default
-                else host.security.value
-            )
             data = V2Data(
                 protocol.value,
                 host.remark.format_map(format_variables),
-                host.address.format_map(format_variables),
+                exrex.getone(host.address).format_map(format_variables),
                 host.port or inbound["port"],
                 transport_type=inbound.get("network"),
-                sni=sni,
-                host=req_host,
-                tls=host_tls or inbound.get("tls"),
+                sni=(
+                    exrex.getone(host.sni)
+                    if host.sni
+                    else inbound.get("sni", "")
+                ),
+                host=(
+                    exrex.getone(host.host)
+                    if host.host
+                    else inbound.get("host", "")
+                ),
+                tls=(
+                    None
+                    if host.security == InboundHostSecurity.inbound_default
+                    else host.security.value
+                )
+                or inbound.get("tls"),
                 header_type=inbound.get("header_type"),
                 alpn=host.alpn if host.alpn != "none" else None,
                 path=(
