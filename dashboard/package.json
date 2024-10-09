@@ -95,6 +95,7 @@
     "react-qr-code": "^2.0.14",
     "react-resizable-panels": "^2.0.19",
     "react-use-websocket": "^4.8.1",
+    "recharts": "^2.12.7",
     "remirror": "^2.0.39",
     "sonner": "^1.4.41",
     "tailwind-merge": "^2.3.0",
