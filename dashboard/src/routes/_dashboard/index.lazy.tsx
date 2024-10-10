@@ -6,7 +6,7 @@ import {
     CardTitle,
     Page,
 } from '@marzneshin/components';
-import { UsersStatsWidget, useUsersStatsQuery } from '@marzneshin/features/users';
+import { UsersStatsWidget, useUsersStatsQuery } from '@marzneshin/modules/users';
 import { useTranslation } from 'react-i18next';
 import { FC } from 'react';
 

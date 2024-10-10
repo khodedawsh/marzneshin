@@ -5,7 +5,7 @@ import {
 import {
     UsersMutationDialog,
     useRouterUserContext,
-} from "@marzneshin/features/users";
+} from "@marzneshin/modules/users";
 
 
 const UserEdit = () => {

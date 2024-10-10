@@ -132,12 +132,17 @@ class UserResponse(User):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserUsageResponse(BaseModel):
+class UserUsage(BaseModel):
+    used_traffic: int
+    usage_date: datetime
+
+
+class UserNodeUsageSeries(BaseModel):
     node_id: int | None = None
     node_name: str
-    used_traffic: int
+    usages: list[tuple[int, int]]  # list[UserUsage]
 
 
-class UserUsagesResponse(BaseModel):
+class UserUsageSeriesResponse(BaseModel):
     username: str
-    usages: list[UserUsageResponse]
+    node_usages: list[UserNodeUsageSeries]

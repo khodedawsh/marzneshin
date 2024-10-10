@@ -5,7 +5,7 @@ import {
 import {
     useRouterUserContext,
     UsersSettingsDialog,
-} from "@marzneshin/features/users";
+} from "@marzneshin/modules/users";
 import { useDialog } from "@marzneshin/hooks";
 
 const UserOpen = () => {

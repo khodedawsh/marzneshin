@@ -7,7 +7,7 @@ import {
     UserUsedTraffic,
     UserExpirationValue,
     userTrafficSortingFn,
-} from "@marzneshin/features/users"
+} from "@marzneshin/modules/users"
 
 export const columns: ColumnDef<UserType>[] = [
     {

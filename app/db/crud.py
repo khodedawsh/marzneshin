@@ -1,5 +1,6 @@
 import json
 import secrets
+from collections import defaultdict
 from datetime import datetime, timedelta
 from enum import Enum
 from types import NoneType
@@ -38,8 +39,9 @@ from app.models.user import (
     UserDataUsageResetStrategy,
     UserModify,
     UserStatus,
-    UserUsageResponse,
     UserExpireStrategy,
+    UserNodeUsageSeries,
+    UserUsageSeriesResponse,
 )
 
 
@@ -311,30 +313,36 @@ def get_users(
 
 def get_user_usages(
     db: Session,
-    dbuser: User,
+    db_user: User,
     start: datetime,
     end: datetime,
-) -> List[UserUsageResponse]:
-    usages = dict()
-
-    for node in db.query(Node).all():
-        usages[node.id] = UserUsageResponse(
-            node_id=node.id, node_name=node.name, used_traffic=0
-        )
-
+) -> UserUsageSeriesResponse:
+    start = start.replace(minute=0, second=0, microsecond=0)
     cond = and_(
-        NodeUserUsage.user_id == dbuser.id,
+        NodeUserUsage.user_id == db_user.id,
         NodeUserUsage.created_at >= start,
         NodeUserUsage.created_at <= end,
     )
 
-    for v in db.query(NodeUserUsage).filter(cond):
-        try:
-            usages[v.node_id or 0].used_traffic += v.used_traffic
-        except KeyError:
-            pass
+    usages = defaultdict(dict)
 
-    return list(usages.values())
+    for v in db.query(NodeUserUsage).filter(cond):
+        usages[v.node_id][v.created_at.timestamp()] = v.used_traffic
+
+    result = UserUsageSeriesResponse(username=db_user.username, node_usages=[])
+    for node_id, rows in usages.items():
+        node_usages = UserNodeUsageSeries(
+            node_id=node_id, node_name=str(node_id), usages=[]
+        )
+        current = start
+        while current <= end:
+            node_usages.usages.append(
+                (int(current.timestamp()), rows.get(current.timestamp()) or 0)
+            )
+            current += timedelta(hours=1)
+        result.node_usages.append(node_usages)
+
+    return result
 
 
 def get_users_count(

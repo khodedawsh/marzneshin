@@ -7,7 +7,7 @@ import { queryClient } from "@marzneshin/utils";
 import {
     RouterUserContext,
     userQueryOptions,
-} from "@marzneshin/features/users";
+} from "@marzneshin/modules/users";
 import { Suspense, useMemo } from "react";
 import {
     AlertDialog,

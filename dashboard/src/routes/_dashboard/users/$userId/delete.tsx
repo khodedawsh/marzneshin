@@ -5,7 +5,7 @@ import {
 import {
     UsersDeleteConfirmationDialog,
     useRouterUserContext,
-} from "@marzneshin/features/users";
+} from "@marzneshin/modules/users";
 import { useDialog } from "@marzneshin/hooks";
 
 const UserDelete = () => {

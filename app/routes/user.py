@@ -26,7 +26,7 @@ from app.models.user import (
     UserCreate,
     UserModify,
     UserResponse,
-    UserUsagesResponse,
+    UserUsageSeriesResponse,
 )
 from app.utils import report
 
@@ -418,16 +418,15 @@ async def revoke_user_subscription(
     return user
 
 
-@router.get("/{username}/usage", response_model=UserUsagesResponse)
+@router.get("/{username}/usage", response_model=UserUsageSeriesResponse)
 def get_user_usage(
     db: DBDep, db_user: UserDep, start_date: StartDateDep, end_date: EndDateDep
 ):
     """
     Get users usage
     """
-    usages = crud.get_user_usages(db, db_user, start_date, end_date)
 
-    return {"usages": usages, "username": db_user.username}
+    return crud.get_user_usages(db, db_user, start_date, end_date)
 
 
 @router.put("/{username}/set-owner", response_model=UserResponse)

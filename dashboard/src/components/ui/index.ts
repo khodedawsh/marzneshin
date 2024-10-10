@@ -35,3 +35,4 @@ export * from "./accordion";
 export * from "./command";
 export * from "./sortable";
 export * from "./skeleton";
+export * from "./chart";

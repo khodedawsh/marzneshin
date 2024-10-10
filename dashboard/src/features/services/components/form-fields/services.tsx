@@ -18,7 +18,7 @@ import {
     useServicesQuery,
     type ServiceType,
 } from "@marzneshin/features/services";
-import { ServiceCard } from "@marzneshin/features/users";
+import { ServiceCard } from "@marzneshin/modules/users";
 import { cn } from "@marzneshin/utils";
 import type { FC } from "react";
 import {

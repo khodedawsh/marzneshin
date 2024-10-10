@@ -18,7 +18,7 @@ import {
     AdminType,
 } from "@marzneshin/modules/admins";
 import { ServicesField } from "@marzneshin/features/services";
-import { UsernameField } from "@marzneshin/features/users";
+import { UsernameField } from "@marzneshin/modules/users";
 import {
     PasswordField,
     EnabledField,

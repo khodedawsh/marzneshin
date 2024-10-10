@@ -7,7 +7,7 @@ import {
     Page,
     Loading,
 } from '@marzneshin/components';
-import { UsersNoServiceAlert, UsersTable } from '@marzneshin/features/users';
+import { UsersNoServiceAlert, UsersTable } from '@marzneshin/modules/users';
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { type FC, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
