@@ -123,6 +123,7 @@ class UserResponse(User):
     enabled: bool
     used_traffic: int
     lifetime_used_traffic: int
+    sub_revoked_at: datetime | None
     created_at: datetime
     service_ids: list[int]
     subscription_url: str

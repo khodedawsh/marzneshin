@@ -206,6 +206,7 @@ class User(Base):
     admin = relationship("Admin", back_populates="users")
     sub_updated_at = Column(DateTime)
     sub_last_user_agent = Column(String(512))
+    sub_revoked_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     note = Column(String(500))
     online_at = Column(DateTime)

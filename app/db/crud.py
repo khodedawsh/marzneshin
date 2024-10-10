@@ -470,6 +470,7 @@ def reset_user_data_usage(db: Session, dbuser: User):
 
 def revoke_user_sub(db: Session, dbuser: User):
     dbuser.key = secrets.token_hex(16)
+    dbuser.sub_revoked_at = datetime.utcnow()
     db.commit()
     db.refresh(dbuser)
     return dbuser
