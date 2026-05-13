@@ -35,6 +35,46 @@ def string_to_temp_file(content: str):
     return file
 
 
+def _root_cause(exc: BaseException) -> BaseException:
+    """Walk ``__context__`` / ``__cause__`` to find the most informative
+    underlying exception.
+
+    grpclib has a known cosmetic bug: when the remote side abruptly tears
+    down the H2 stream (``StreamTerminatedError: Connection lost``), the
+    ``async with stream`` ``__aexit__`` calls ``Stream.reset_nowait()``,
+    which in turn does ``self._transport.write(...)`` on an already
+    half-closed SSL transport. asyncio's ``_SSLProtocolTransport.write``
+    then dereferences ``self._ssl_protocol`` (already nulled by a prior
+    ``close()``) and raises::
+
+        AttributeError: 'NoneType' object has no attribute '_write_appdata'
+
+    That AttributeError gets re-raised on top of the *real* cause, which
+    Python preserves in ``__context__`` / ``__cause__``. This helper
+    digs that real cause out so we can log
+    ``StreamTerminatedError: Connection lost`` (= node killed the stream)
+    instead of the misleading ``_write_appdata`` noise.
+    """
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    best: BaseException = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if not isinstance(cur, (AttributeError, asyncio.CancelledError)):
+            best = cur
+        cur = cur.__cause__ or cur.__context__
+    return best
+
+
+def _is_spurious_appdata_error(exc: BaseException) -> bool:
+    """True iff ``exc`` is the cosmetic ``_write_appdata`` AttributeError
+    raised by grpclib/asyncio on a torn-down SSL transport."""
+    return (
+        isinstance(exc, AttributeError)
+        and "_write_appdata" in str(exc)
+    )
+
+
 class MarzNodeGRPCLIB(MarzNodeBase, MarzNodeDB):
     def __init__(
         self,
@@ -71,6 +111,27 @@ class MarzNodeGRPCLIB(MarzNodeBase, MarzNodeDB):
         self._channel.close()
         self._monitor_task.cancel()
 
+    def _force_close_channel(self) -> None:
+        """Drop the underlying H2 protocol/SSL transport so the next
+        ``__connect__`` call creates a fresh connection.
+
+        When the SSL transport gets torn down by asyncio (node restart,
+        abrupt TCP RST, timeout), ``_SSLProtocolTransport._ssl_protocol``
+        may be nulled while ``H2Protocol.connection_lost`` is never
+        fired. ``Channel._connected`` then keeps returning ``True`` and
+        every subsequent RPC tries to write through the dead transport,
+        producing ``AttributeError: 'NoneType' object has no attribute
+        '_write_appdata'``. Calling ``Channel.close()`` clears
+        ``_protocol`` so the monitor loop reconnects cleanly on the next
+        iteration.
+        """
+        try:
+            self._channel.close()
+        except Exception:
+            logger.exception(
+                "Node %i: error while force-closing channel", self.id
+            )
+
     async def _monitor_channel(self):
         while state := self._channel._state:
             logger.debug("node %i channel state: %s", self.id, state.value)
@@ -86,8 +147,21 @@ class MarzNodeGRPCLIB(MarzNodeBase, MarzNodeDB):
                 if not self.synced:
                     try:
                         await self._sync()
-                    except:
-                        pass
+                    except Exception as e:
+                        real = _root_cause(e)
+                        if _is_spurious_appdata_error(e) and real is not e:
+                            error_msg = (
+                                f"sync failed: {type(real).__name__}: "
+                                f"{real} (node likely rejected the RPC; "
+                                "check marznode logs on that node)"
+                            )
+                        else:
+                            error_msg = (
+                                f"sync failed: {type(e).__name__}: {e}"
+                            )
+                        logger.warning("Node %i: %s", self.id, error_msg)
+                        self.set_status(NodeStatus.unhealthy, error_msg)
+                        self._force_close_channel()
                     else:
                         self._streaming_task = asyncio.create_task(
                             self._stream_user_updates()
@@ -116,15 +190,55 @@ class MarzNodeGRPCLIB(MarzNodeBase, MarzNodeDB):
                             ],
                         )
                     )
-        except (OSError, ConnectionError, GRPCError, StreamTerminatedError):
-            logger.info("node %i detached", self.id)
+        except asyncio.CancelledError:
+            raise
+        except (OSError, ConnectionError, GRPCError, StreamTerminatedError) as e:
+            logger.info("node %i detached: %s", self.id, e)
+        except Exception:
+            # Catch-all so a transient internal error (e.g. AttributeError
+            # from grpclib/h2 on a torn-down channel) does not silently
+            # kill the streaming task and leave self.synced=True forever,
+            # which would deadlock the bounded _updates_queue.
+            logger.exception(
+                "node %i: unexpected error in _stream_user_updates", self.id
+            )
+            self._force_close_channel()
+        finally:
             self.synced = False
 
     async def update_user(self, user, inbounds: set[str] | None = None):
         if inbounds is None:
             inbounds = set()
 
-        await self._updates_queue.put({"user": user, "inbounds": inbounds})
+        # If the streaming task is dead (e.g. channel was torn down), the
+        # bounded queue would silently fill up and every subsequent
+        # update_user() would deadlock. Drop the update with a clear log
+        # instead of blocking forever — the next reconcile cycle on the
+        # node side and/or _monitor_channel reconnect will fix state.
+        streaming_alive = (
+            self._streaming_task is not None and not self._streaming_task.done()
+        )
+        if not streaming_alive or not self.synced:
+            logger.warning(
+                "Node %i: dropping user update (streaming alive=%s, "
+                "synced=%s) for user id=%s",
+                self.id,
+                streaming_alive,
+                self.synced,
+                getattr(user, "id", "?"),
+            )
+            return
+
+        payload = {"user": user, "inbounds": inbounds}
+        try:
+            self._updates_queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            logger.warning(
+                "Node %i: _updates_queue full, dropping user update for "
+                "id=%s — node likely behind, will be resynced on reconnect",
+                self.id,
+                getattr(user, "id", "?"),
+            )
 
     async def _repopulate_users(self, users_data: list[dict]) -> None:
         updates = [
@@ -175,9 +289,21 @@ class MarzNodeGRPCLIB(MarzNodeBase, MarzNodeDB):
                 )
             )
             await self._sync()
-        except:
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # Log the full traceback so obscure errors (e.g. AttributeError
+            # on a torn-down channel) are localized instead of only the
+            # bare message bubbling up to the API caller.
+            logger.exception(
+                "node %i: restart_backend(%s) failed", self.id, name
+            )
             self.synced = False
             self.set_status(NodeStatus.unhealthy)
+            # Drop the protocol so the monitor loop rebuilds the SSL
+            # transport instead of hammering the dead one with every
+            # retry from the panel UI.
+            self._force_close_channel()
             raise
         else:
             self.set_status(NodeStatus.healthy)

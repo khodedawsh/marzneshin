@@ -1,0 +1,24 @@
+# Overlay patch on top of dawsh/marzneshin.
+#
+# Avoids rebuilding the panel (backend + TypeScript dashboard) from
+# scratch — only copies patched Python files over the base image.
+#
+# Patches on top of the base:
+#   app/marznode/grpclib.py  - catch Exception + finally self.synced=False,
+#                              put_nowait with QueueFull fallback,
+#                              _force_close_channel for stale SSL,
+#                              _root_cause / _is_spurious_appdata_error.
+#   app/marznode/grpcio.py   - same catch-all + put_nowait changes.
+#
+# Base image pinned by digest. To update:
+#   docker pull dawsh/marzneshin:latest \
+#     && docker image inspect dawsh/marzneshin:latest \
+#          --format '{{range .RepoDigests}}{{.}}{{end}}'
+# — substitute, test, commit.
+
+FROM dawsh/marzneshin@sha256:eab940f41d926bcd02f0b639d75a479e8a5acedcc1fc260d071d0c01d9abd9aa
+
+COPY app/marznode/grpclib.py /app/app/marznode/grpclib.py
+COPY app/marznode/grpcio.py  /app/app/marznode/grpcio.py
+
+# Keep original CMD / entrypoint from base image.

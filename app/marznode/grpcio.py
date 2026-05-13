@@ -91,32 +91,78 @@ class MarzNodeGRPCIO(MarzNodeBase, MarzNodeDB):
 
     async def _stream_user_updates(self):
         logger.debug("opened the stream")
-        stream = self._stub.SyncUsers()
-        while True:
-            user_update = await self._updates_queue.get()
-            logger.debug("got something from queue")
-            user = user_update["user"]
-            try:
-                await stream.write(
-                    UserData(
-                        user=User(
-                            id=user.id, username=user.username, key=user.key
-                        ),
-                        inbounds=[
-                            Inbound(tag=t) for t in user_update["inbounds"]
-                        ],
+        try:
+            stream = self._stub.SyncUsers()
+            while True:
+                user_update = await self._updates_queue.get()
+                logger.debug("got something from queue")
+                user = user_update["user"]
+                try:
+                    await stream.write(
+                        UserData(
+                            user=User(
+                                id=user.id,
+                                username=user.username,
+                                key=user.key,
+                            ),
+                            inbounds=[
+                                Inbound(tag=t) for t in user_update["inbounds"]
+                            ],
+                        )
                     )
-                )
-            except RpcError:
-                self.synced = False
+                except RpcError as e:
+                    logger.info("node %i: stream RpcError: %s", self.id, e)
+                    return
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # Catch-all so transient internal errors (e.g. AttributeError
+            # from grpc internals on a torn-down channel) do not silently
+            # kill the streaming task and leave self.synced=True forever,
+            # which would deadlock the bounded _updates_queue.
+            logger.exception(
+                "node %i: unexpected error in _stream_user_updates", self.id
+            )
+        finally:
+            self.synced = False
+            try:
                 self.set_status(NodeStatus.unhealthy)
-                return
+            except Exception:
+                logger.exception(
+                    "node %i: failed to set unhealthy after stream end",
+                    self.id,
+                )
 
     async def update_user(self, user, inbounds: set[str] | None = None):
         if inbounds is None:
             inbounds = set()
 
-        await self._updates_queue.put({"user": user, "inbounds": inbounds})
+        # See grpclib.py update_user() for the rationale: avoid blocking
+        # forever on a dead streaming task that nobody is draining.
+        streaming_alive = (
+            self._streaming_task is not None and not self._streaming_task.done()
+        )
+        if not streaming_alive or not self.synced:
+            logger.warning(
+                "Node %i: dropping user update (streaming alive=%s, "
+                "synced=%s) for user id=%s",
+                self.id,
+                streaming_alive,
+                self.synced,
+                getattr(user, "id", "?"),
+            )
+            return
+
+        payload = {"user": user, "inbounds": inbounds}
+        try:
+            self._updates_queue.put_nowait(payload)
+        except asyncio.QueueFull:
+            logger.warning(
+                "Node %i: _updates_queue full, dropping user update for "
+                "id=%s — node likely behind, will be resynced on reconnect",
+                self.id,
+                getattr(user, "id", "?"),
+            )
 
     async def _repopulate_users(self, users_data: list[dict]) -> None:
         updates = [
@@ -164,7 +210,15 @@ class MarzNodeGRPCIO(MarzNodeBase, MarzNodeDB):
                 )
             )
             await self._sync()
-        except RpcError:
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # Catch wider than RpcError so internal grpc/asyncio errors
+            # are logged with a full traceback instead of bubbling up
+            # unannotated.
+            logger.exception(
+                "node %i: restart_backend(%s) failed", self.id, name
+            )
             self.synced = False
             self.set_status(NodeStatus.unhealthy)
             raise
