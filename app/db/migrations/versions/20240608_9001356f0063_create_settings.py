@@ -43,7 +43,7 @@ def upgrade() -> None:
                         },
                         {"pattern": "^([Cc]lash|[Ss]tash)", "result": "clash"},
                         {
-                            "pattern": "^(SFA|SFI|SFM|SFT|[Kk]aring|[Hh]iddify[Nn]ext)",
+                            "pattern": "^(SFA|SFI|SFM|SFT|[Kk]aring|[Hh]iddify[Nn]ext|[Ii]n[Hh]ive)",
                             "result": "sing-box",
                         },
                         {
