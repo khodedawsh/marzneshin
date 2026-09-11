@@ -6,27 +6,15 @@
 
 <br/>
 <p align="center">
-    <a href="https://github.com/marzneshin/marzneshin/actions/workflows/dashboard-ci.yml">
-        <img src="https://github.com/marzneshin/marzneshin/actions/workflows/dashboard-ci.yml/badge.svg" />
+    <a href="https://github.com/BrotherHugo/marzneshin/actions/workflows/ci.yml">
+        <img src="https://github.com/BrotherHugo/marzneshin/actions/workflows/ci.yml/badge.svg" />
     </a>
-    <a href="https://github.com/marzneshin/marzneshin/actions/workflows/package.yml" target="_blank">
-        <img src="https://github.com/marzneshin/marzneshin/actions/workflows/package.yml/badge.svg" />
-    </a>
-    <a href="https://hub.docker.com/r/dawsh/marzneshin" target="_blank">
-        <img src="https://img.shields.io/docker/pulls/dawsh/marzneshin?style=flat-square&logo=docker" />
+    <a href="https://hub.docker.com/r/brotherhugo/marznode" target="_blank">
+        <img src="https://img.shields.io/docker/v/brotherhugo/marznode/v0.1.0?label=marznode&logo=docker" />
     </a>
     <br>
     <a href="#">
-        <img src="https://img.shields.io/github/license/marzneshin/marzneshin?style=flat-square" />
-    </a>
-    <a href="https://t.me/marzneshins" target="_blank">
-        <img src="https://img.shields.io/badge/telegram-group-blue?style=flat-square&logo=telegram" />
-    </a>
-    <a href="#">
-        <img src="https://img.shields.io/badge/twitter-commiunity-blue?style=flat-square&logo=twitter" />
-    </a>
-    <a href="#">
-        <img src="https://img.shields.io/github/stars/marzneshin/marzneshin?style=social" />
+        <img src="https://img.shields.io/github/license/BrotherHugo/marzneshin?style=flat-square" />
     </a>
 </p>
 
@@ -38,6 +26,7 @@
 
 ## Table of Contents
 
+- [BrotherHugo / Evenlights](#brotherhugo--evenlights)
 - [Overview](#overview)
   - [Docs](#docs)
   - [Features](#features)
@@ -46,6 +35,12 @@
 - [Donation](#donation)
 - [License](#license)
 - [Contributors](#contributors)
+
+# BrotherHugo / Evenlights
+
+Это форк [Marzneshin](https://github.com/marzneshin/marzneshin) организации **BrotherHugo** для панели Evenlights: VLESS+Reality, подписки sing-box, учёт трафика, свои Docker-образы вместо заброшенных `dawsh/*`.
+
+Текущая работа — [docs/exec-plans/active/modernize-evenlights-panel.md](docs/exec-plans/active/modernize-evenlights-panel.md). Карта репозитория для агентов и разработчиков — [AGENTS.md](AGENTS.md).
 
 # Overview
 
